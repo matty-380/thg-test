@@ -1,5 +1,6 @@
 import os
 import datetime
+import json
 import gspread
 from google.oauth2.service_account import Credentials
 import pandas as pd
@@ -8,9 +9,10 @@ import streamlit as st
 # ==========================================
 # 1. CONFIGURAZIONE LINK E CONNESSIONE CLOUD
 # ==========================================
+# ⚠️ SOSTITUISCI QUESTO LINK CON IL TUO LINK REALE DEL FOGLIO GOOGLE
 SHEET_URL = "https://docs.google.com/spreadsheets/d/IL_TUO_LINK_QUI/edit"
 
-scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
+scope = ["https://www.googleapis.com/auth/sheets", "https://www.googleapis.com/auth/drive"]
 
 cartella_script = os.path.dirname(os.path.abspath(__file__))
 percorso_credenziali = os.path.join(cartella_script, "credentials.json")
@@ -20,21 +22,29 @@ if not os.path.exists(percorso_credenziali):
 
 sheet = None
 
-if os.path.exists(percorso_credenziali):
+# --- STRATEGIA DI CONNESSIONE AGGIORNATA ---
+# Tentativo 1: Verifichiamo se siamo in Cloud usando la nuova chiave "chiave_google"
+if "chiave_google" in st.secrets:
+    try:
+        # Carichiamo il file JSON originale direttamente dalla stringa salvata in cloud
+        info_credenziali = json.loads(st.secrets["chiave_google"])
+        creds = Credentials.from_service_account_info(info_credenziali, scopes=scope)
+        client = gspread.authorize(creds)
+        sheet = client.open_by_url(SHEET_URL).sheet1
+    except Exception as e:
+        st.error(f"Errore durante la lettura delle credenziali Cloud: {e}")
+
+# Tentativo 2: Se non siamo in Cloud, proviamo a usare il file sul tuo PC
+elif os.path.exists(percorso_credenziali):
     creds = Credentials.from_service_account_file(percorso_credenziali, scopes=scope)
     client = gspread.authorize(creds)
     sheet = client.open_by_url(SHEET_URL).sheet1
-else:
-    try:
-        if "gcp_service_account" in st.secrets:
-            creds = Credentials.from_service_account_info(st.secrets["gcp_service_account"], scopes=scope)
-            client = gspread.authorize(creds)
-            sheet = client.open_by_url(SHEET_URL).sheet1
-    except Exception:
-        sheet = None
 
+# Se entrambi i tentativi falliscono, mostriamo dove l'app ha cercato
 if sheet is None:
-    st.error("Errore di Sicurezza: Credenziali non trovate!")
+    st.error("❌ Errore di Connessione: L'applicazione non ha trovato chiavi valide.")
+    st.info("• Se sei sul PC: Assicurati che il file 'credentials.json' sia sul Desktop nella stessa cartella del codice.\n"
+            "• Se sei Online: Assicurati di aver configurato correttamente la sezione 'Secrets' nel pannello di Streamlit.")
     st.stop()
 
 # ==========================================
@@ -105,7 +115,7 @@ with col_caratt2:
     chk_giovanili = st.checkbox("10. Giovanili")
 
 with col_caratt3:
-    campionato_attuale = st.text_input("11. Campionato attuale:")
+    canyon_attuale = st.text_input("11. Campionato attuale:")
     girone_attuale = st.text_input("12. Girone attuale:")
     club_attuale = st.text_input("13. Club attuale:")
 
@@ -121,54 +131,48 @@ if st.button("💾 Salva Scheda Giocatore", type="primary", use_container_width=
         valore_giovanili = "Giovanili" if chk_giovanili else ""
         
         with st.spinner("Calcolo riga libera e generazione ID..."):
-            # 1. Scarichiamo la struttura reale del foglio (righe e colonne effettive)
             valori_esistenti = sheet.get_all_values()
-            
-            # 2. Calcoliamo la prima riga matematica libera
             prossima_riga = len(valori_esistenti) + 1
             
-            # 3. Generiamo l'ID progressivo intelligente
             if prossima_riga == 2:
-                # Se c'è solo la riga delle intestazioni, il primo ID è 1
                 nuovo_id = 1
             else:
-                # Prende l'ID dell'ultima riga inserita (Colonna A, indice 0) e aggiunge 1
                 try:
                     nuovo_id = int(valori_esistenti[-1][0]) + 1
                 except ValueError:
-                    # Se per caso l'ultimo valore non fosse un numero, usa il conteggio righe come emergenza
                     nuovo_id = prossima_riga - 1
             
-            # Prepariamo la riga includendo l'ID come primissimo valore
             nuova_riga = [
-                nuovo_id,              # ID Univoco generato automaticamente
-                nome_cognome,          # 1
-                anno_nascita,          # 2
-                nazionalita,           # 3
-                posizione_naturale,    # 4
-                posizione_naturale2,   # 5
-                posizione_secondaria,  # 6
-                modulo_attuale,        # 7
-                piede_preferito,       # 8
-                valore_prima_squadra,  # 9
-                valore_giovanili,      # 10
-                campionato_attuale,    # 11
-                girone_attuale,        # 12
-                club_attuale           # 13
+                nuovo_id,
+                nome_cognome,
+                anno_nascita,
+                lista_nazioni,
+                posizione_naturale,
+                posizione_naturale2,
+                posizione_secondaria,
+                modulo_attuale,
+                piede_preferito,
+                valore_prima_squadra,
+                valore_giovanili,
+                canyon_attuale,
+                girone_attuale,
+                club_attuale
             ]
             
-            # 4. Forziamo la scrittura esattamente nella riga libera calcolata
             sheet.insert_row(nuova_riga, index=prossima_riga, value_input_option='RAW')
-            st.success(f"✔️ Assegnato ID {nuovo_id}: Scheda di '{nome_cognome}' salvata nella riga {prossima_riga} del database cloud!")
+            st.success(f"✔️ Assegnato ID {nuovo_id}: Scheda di '{nome_cognome}' salvata con successo!")
 
 # ==========================================
 # 5. ANTEPRIMA DEL DATABASE ONLINE
 # ==========================================
 st.markdown("---")
 st.subheader("📊 Vista Tabella Cloud (Sincronizzata)")
-dati_cloud = sheet.get_all_records()
-if dati_cloud:
-    df_visualizzazione = pd.DataFrame(dati_cloud)
-    st.dataframe(df_visualizzazione, use_container_width=True)
-else:
-    st.info("Il database è vuoto. Inserisci il primo giocatore per vedere la tabella.")
+try:
+    dati_cloud = sheet.get_all_records()
+    if dati_cloud:
+        df_visualizzazione = pd.DataFrame(dati_cloud)
+        st.dataframe(df_visualizzazione, use_container_width=True)
+    else:
+        st.info("Il database è vuoto. Inserisci il primo giocatore per vedere la tabella.")
+except Exception:
+    st.info("Inserisci il primo record per inizializzare la visualizzazione della tabella.")
