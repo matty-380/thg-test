@@ -8,30 +8,23 @@ import streamlit as st
 # ==========================================
 # 1. CONFIGURAZIONE LINK E CONNESSIONE CLOUD
 # ==========================================
-# ⚠️ RICORDATI DI SOSTITUIRE QUESTO LINK CON QUELLO DEL TUO FOGLIO GOOGLE
-SHEET_URL = "https://docs.google.com/spreadsheets/d/1y-tABOUcIIwxD7W9zNcg22uKjr-bHxlKziJim3S-n1I/edit?usp=sharing"
+SHEET_URL = "https://docs.google.com/spreadsheets/d/IL_TUO_LINK_QUI/edit"
 
 scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
 
-# Prepariamo i percorsi locali per il tuo PC
 cartella_script = os.path.dirname(os.path.abspath(__file__))
 percorso_credenziali = os.path.join(cartella_script, "credentials.json")
 
 if not os.path.exists(percorso_credenziali):
     percorso_credenziali = os.path.join(cartella_script, "credentials.json.txt")
 
-
-# --- NUOVA LOGICA IBRIDA DI SICUREZZA BLINDATA ---
 sheet = None
 
-# Mossa 1: Controlliamo PRIMA se siamo sul tuo PC (se c'è il file credentials.json)
 if os.path.exists(percorso_credenziali):
     creds = Credentials.from_service_account_file(percorso_credenziali, scopes=scope)
     client = gspread.authorize(creds)
     sheet = client.open_by_url(SHEET_URL).sheet1
 else:
-    # Mossa 2: Se il file locale NON esiste, allora siamo online in Cloud.
-    # Usiamo un "try" per evitare il crash nel caso in cui st.secrets sia vuoto
     try:
         if "gcp_service_account" in st.secrets:
             creds = Credentials.from_service_account_info(st.secrets["gcp_service_account"], scopes=scope)
@@ -40,11 +33,9 @@ else:
     except Exception:
         sheet = None
 
-# Se alla fine di tutti i controlli non siamo riusciti a collegarci, mostriamo l'errore
 if sheet is None:
-    st.error("Errore di Sicurezza: Credenziali non trovate! Controlla che il file 'credentials.json' sia sul Desktop accanto al file del codice.")
+    st.error("Errore di Sicurezza: Credenziali non trovate!")
     st.stop()
-
 
 # ==========================================
 # 2. LOGICA DATI E RANGE DINAMICI
@@ -119,7 +110,7 @@ with col_caratt3:
     club_attuale = st.text_input("13. Club attuale:")
 
 # ==========================================
-# 4. LOGICA DI SALVATAGGIO ORDINATA (1-13)
+# 4. LOGICA DI SALVATAGGIO MATEMATICA E ID
 # ==========================================
 st.markdown("---")
 if st.button("💾 Salva Scheda Giocatore", type="primary", use_container_width=True):
@@ -129,25 +120,46 @@ if st.button("💾 Salva Scheda Giocatore", type="primary", use_container_width=
         valore_prima_squadra = "1a squadra" if chk_prima_squadra else ""
         valore_giovanili = "Giovanili" if chk_giovanili else ""
         
-        nuova_riga = [
-            nome_cognome,          # 1
-            anno_nascita,          # 2
-            nazionalita,           # 3
-            posizione_naturale,    # 4
-            posizione_naturale2,   # 5
-            posizione_secondaria,  # 6
-            modulo_attuale,        # 7
-            piede_preferito,       # 8
-            valore_prima_squadra,  # 9
-            valore_giovanili,      # 10
-            campionato_attuale,    # 11
-            girone_attuale,        # 12
-            club_attuale           # 13
-        ]
-        
-        with st.spinner("Scrittura nel database cloud in corso..."):
-            sheet.append_row(nuova_riga)
-            st.success(f"✔️ Scheda di '{nome_cognome}' salvata correttamente in cloud!")
+        with st.spinner("Calcolo riga libera e generazione ID..."):
+            # 1. Scarichiamo la struttura reale del foglio (righe e colonne effettive)
+            valori_esistenti = sheet.get_all_values()
+            
+            # 2. Calcoliamo la prima riga matematica libera
+            prossima_riga = len(valori_esistenti) + 1
+            
+            # 3. Generiamo l'ID progressivo intelligente
+            if prossima_riga == 2:
+                # Se c'è solo la riga delle intestazioni, il primo ID è 1
+                nuovo_id = 1
+            else:
+                # Prende l'ID dell'ultima riga inserita (Colonna A, indice 0) e aggiunge 1
+                try:
+                    nuovo_id = int(valori_esistenti[-1][0]) + 1
+                except ValueError:
+                    # Se per caso l'ultimo valore non fosse un numero, usa il conteggio righe come emergenza
+                    nuovo_id = prossima_riga - 1
+            
+            # Prepariamo la riga includendo l'ID come primissimo valore
+            nuova_riga = [
+                nuovo_id,              # ID Univoco generato automaticamente
+                nome_cognome,          # 1
+                anno_nascita,          # 2
+                nazionalita,           # 3
+                posizione_naturale,    # 4
+                posizione_naturale2,   # 5
+                posizione_secondaria,  # 6
+                modulo_attuale,        # 7
+                piede_preferito,       # 8
+                valore_prima_squadra,  # 9
+                valore_giovanili,      # 10
+                campionato_attuale,    # 11
+                girone_attuale,        # 12
+                club_attuale           # 13
+            ]
+            
+            # 4. Forziamo la scrittura esattamente nella riga libera calcolata
+            sheet.insert_row(nuova_riga, index=prossima_riga, value_input_option='RAW')
+            st.success(f"✔️ Assegnato ID {nuovo_id}: Scheda di '{nome_cognome}' salvata nella riga {prossima_riga} del database cloud!")
 
 # ==========================================
 # 5. ANTEPRIMA DEL DATABASE ONLINE
