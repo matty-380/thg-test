@@ -9,7 +9,7 @@ import streamlit as st
 # 1. CONFIGURAZIONE LINK E CONNESSIONE CLOUD
 # ==========================================
 # ⚠️ SOSTITUISCI QUESTO LINK CON IL TUO LINK REALE DEL FOGLIO GOOGLE
-SHEET_URL = "https://docs.google.com/spreadsheets/d/IL_TUO_LINK_QUI/edit"
+SHEET_URL = "https://docs.google.com/spreadsheets/d/1y-tABOUcIIwxD7W9zNcg22uKjr-bHxlKziJim3S-n1I/edit?usp=sharing"
 
 scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
 
