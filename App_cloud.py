@@ -1,6 +1,5 @@
 import os
 import datetime
-import json
 import gspread
 from google.oauth2.service_account import Credentials
 import pandas as pd
@@ -12,7 +11,7 @@ import streamlit as st
 # ⚠️ SOSTITUISCI QUESTO LINK CON IL TUO LINK REALE DEL FOGLIO GOOGLE
 SHEET_URL = "https://docs.google.com/spreadsheets/d/IL_TUO_LINK_QUI/edit"
 
-scope = ["https://www.googleapis.com/auth/sheets", "https://www.googleapis.com/auth/drive"]
+scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
 
 cartella_script = os.path.dirname(os.path.abspath(__file__))
 percorso_credenziali = os.path.join(cartella_script, "credentials.json")
@@ -22,29 +21,26 @@ if not os.path.exists(percorso_credenziali):
 
 sheet = None
 
-# --- STRATEGIA DI CONNESSIONE AGGIORNATA ---
-# Tentativo 1: Verifichiamo se siamo in Cloud usando la nuova chiave "chiave_google"
-if "chiave_google" in st.secrets:
+# --- METODO DI CONNESSIONE NATIVO E PROTETTO ---
+# 1. Tentativo in Cloud (Metodo ufficiale Streamlit)
+if "gcp_service_account" in st.secrets:
     try:
-        # Carichiamo il file JSON originale direttamente dalla stringa salvata in cloud
-        info_credenziali = json.loads(st.secrets["chiave_google"])
-        creds = Credentials.from_service_account_info(info_credenziali, scopes=scope)
+        creds = Credentials.from_service_account_info(st.secrets["gcp_service_account"], scopes=scope)
         client = gspread.authorize(creds)
         sheet = client.open_by_url(SHEET_URL).sheet1
     except Exception as e:
-        st.error(f"Errore durante la lettura delle credenziali Cloud: {e}")
+        st.error(f"Errore nella lettura dei Secrets Cloud: {e}")
 
-# Tentativo 2: Se non siamo in Cloud, proviamo a usare il file sul tuo PC
+# 2. Tentativo in Locale (Sul tuo PC)
 elif os.path.exists(percorso_credenziali):
     creds = Credentials.from_service_account_file(percorso_credenziali, scopes=scope)
     client = gspread.authorize(creds)
     sheet = client.open_by_url(SHEET_URL).sheet1
 
-# Se entrambi i tentativi falliscono, mostriamo dove l'app ha cercato
+# Se entrambi falliscono, blocca l'app con istruzioni chiare
 if sheet is None:
-    st.error("❌ Errore di Connessione: L'applicazione non ha trovato chiavi valide.")
-    st.info("• Se sei sul PC: Assicurati che il file 'credentials.json' sia sul Desktop nella stessa cartella del codice.\n"
-            "• Se sei Online: Assicurati di aver configurato correttamente la sezione 'Secrets' nel pannello di Streamlit.")
+    st.error("❌ Errore di Connessione: Credenziali non configurate correttamente.")
+    st.info("Se sei online, assicurati che il box 'Secrets' sia compilato esattamente come mostrato nella guida.")
     st.stop()
 
 # ==========================================
@@ -115,7 +111,7 @@ with col_caratt2:
     chk_giovanili = st.checkbox("10. Giovanili")
 
 with col_caratt3:
-    canyon_attuale = st.text_input("11. Campionato attuale:")
+    campionato_attuale = st.text_input("11. Campionato attuale:")
     girone_attuale = st.text_input("12. Girone attuale:")
     club_attuale = st.text_input("13. Club attuale:")
 
@@ -142,11 +138,12 @@ if st.button("💾 Salva Scheda Giocatore", type="primary", use_container_width=
                 except ValueError:
                     nuovo_id = prossima_riga - 1
             
+            # Costruzione riga (Variabili corrette al 100%)
             nuova_riga = [
                 nuovo_id,
                 nome_cognome,
                 anno_nascita,
-                lista_nazioni,
+                nazionalita,
                 posizione_naturale,
                 posizione_naturale2,
                 posizione_secondaria,
@@ -154,7 +151,7 @@ if st.button("💾 Salva Scheda Giocatore", type="primary", use_container_width=
                 piede_preferito,
                 valore_prima_squadra,
                 valore_giovanili,
-                canyon_attuale,
+                campionato_attuale,
                 girone_attuale,
                 club_attuale
             ]
