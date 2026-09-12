@@ -61,7 +61,7 @@ lista_ruoli = ["POR", "TS", "ASA", "ES", "DC", "TD", "ADA", "ED", "MED", "CC", "
 
 lista_moduli = ["3-5-2", "3-4-1-2", "3-4-3", "4-3-2-1", "4-2-3-1", "4-1-4-1", "4-3-1-2", "4-4-2", "4-2-1-3", "4-3-3", "4-2-4"]
 
-lista_scuot = ["Lattuada Giacomo"]
+lista_scout = ["Lattuada Giacomo"]
 
 # ==========================================
 # 3. INTERFACCIA GRAFICA STRUTTURATA
