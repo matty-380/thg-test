@@ -114,6 +114,12 @@ with col_caratt3:
     campionato_attuale = st.text_input("11. Campionato attuale:")
     girone_attuale = st.text_input("12. Girone attuale:")
     club_attuale = st.text_input("13. Club attuale:")
+    
+st.markdown("---")
+
+st.subheader("🔭 Scounting Context")
+
+st.markdown("---")
 
 # ==========================================
 # 4. LOGICA DI SALVATAGGIO MATEMATICA E ID
@@ -173,3 +179,5 @@ try:
         st.info("Il database è vuoto. Inserisci il primo giocatore per vedere la tabella.")
 except Exception:
     st.info("Inserisci il primo record per inizializzare la visualizzazione della tabella.")
+
+
