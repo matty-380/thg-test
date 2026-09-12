@@ -177,12 +177,12 @@ if st.button("💾 Salva Scheda Giocatore", type="primary", use_container_width=
                 valore_giovanili,
                 campionato_attuale,
                 girone_attuale,
-                club_attuale
-                partita_osservata
-                minuti_giocati
-                tipologia_scouting
-                data_reportITA
-                tipologia_scouting
+                club_attuale,
+                partita_osservata,
+                minuti_giocati,
+                tipologia_scouting,
+                data_reportITA,
+                tipologia_scouting,
                 nome_scout
             ]
             
