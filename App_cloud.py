@@ -61,6 +61,8 @@ lista_ruoli = ["POR", "TS", "ASA", "ES", "DC", "TD", "ADA", "ED", "MED", "CC", "
 
 lista_moduli = ["3-5-2", "3-4-1-2", "3-4-3", "4-3-2-1", "4-2-3-1", "4-1-4-1", "4-3-1-2", "4-4-2", "4-2-1-3", "4-3-3", "4-2-4"]
 
+lista_scuot = ["Lattuada Giacomo"]
+
 # ==========================================
 # 3. INTERFACCIA GRAFICA STRUTTURATA
 # ==========================================
@@ -118,8 +120,22 @@ with col_caratt3:
 st.markdown("---")
 
 st.subheader("🔭 Scounting Context")
+col_caratt1, col_caratt2, col_caratt3 = st.columns(3)
+
+with col_caratt1:
+		partita_osservata = st.text_input("14. Partita osservata:")
+		minuti_giocati = st.radio("15. Minuti giocati:", ["<45'", ">45'", "Match completo"])
+
+with col_caratt2:
+		data_report = st.date_input("16. Data compilazione:", value=datetime.date.today())
+		tipologia_scouting = st.radio("17. Tipologia scounting:", ["Live", "Video"])
+
+with col_caratt3:
+		nome_scout = st.selectbox("18. Nome Scout:", lista_scout, index = 0)
 
 st.markdown("---")
+
+# DA AGGIUNGERE IN SEZOINE (SALVATAGGIO) - DA AGGIUNGERE IN GOOGLESHEET
 
 # ==========================================
 # 4. LOGICA DI SALVATAGGIO MATEMATICA E ID
@@ -143,6 +159,8 @@ if st.button("💾 Salva Scheda Giocatore", type="primary", use_container_width=
                     nuovo_id = int(valori_esistenti[-1][0]) + 1
                 except ValueError:
                     nuovo_id = prossima_riga - 1
+                    
+            data_reportITA = data_report.strftime("%d/%m/%Y")
             
             # Costruzione riga (Variabili corrette al 100%)
             nuova_riga = [
@@ -160,6 +178,12 @@ if st.button("💾 Salva Scheda Giocatore", type="primary", use_container_width=
                 campionato_attuale,
                 girone_attuale,
                 club_attuale
+                partita_osservata
+                minuti_giocati
+                tipologia_scouting
+                data_reportITA
+                tipologia_scouting
+                nome_scout
             ]
             
             sheet.insert_row(nuova_riga, index=prossima_riga, value_input_option='RAW')
