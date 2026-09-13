@@ -119,28 +119,28 @@ with col_caratt2:
     
     st.write("")
     st.write("**8. Competition:**")
-    new_competition = st.checkbox("Inserisci un nuovo valore non in elenco")  # 2. Checkbox per decidere se inserire un nuovo valore o sceglierlo dalla lista
+    new_competition = st.checkbox("Inserisci un nuovo valore non in elenco",key="chk_competition")  # 2. Checkbox per decidere se inserire un nuovo valore o sceglierlo dalla lista
     if new_competition:
-        competition = st.text_input("Digita il nuovo valore:")    # Campo di testo libero per digitare un dato inedito
+        competition = st.text_input("Digita il nuovo valore:",key="txt_competition")    # Campo di testo libero per digitare un dato inedito
     else:
-        competition = st.selectbox("Seleziona dai suggerimenti:", lista_competition)    # Menu a tendina che filtra e suggerisce i valori già presenti nel foglio Google
+        competition = st.selectbox("Seleziona dai suggerimenti:", lista_competition,key="sel_competition")    # Menu a tendina che filtra e suggerisce i valori già presenti nel foglio Google
     group = st.text_input("9. Group:")
     
     st.write("")
     st.write("**10. Team:**")
-    new_team = st.checkbox("Inserisci un nuovo valore non in elenco")    # 2. Checkbox per decidere se inserire un nuovo valore o sceglierlo dalla lista
+    new_team = st.checkbox("Inserisci un nuovo valore non in elenco",key="chk_team")    # 2. Checkbox per decidere se inserire un nuovo valore o sceglierlo dalla lista
     if new_team:
-        team = st.text_input("Digita il nuovo valore:")    # Campo di testo libero per digitare un dato inedito
+        team = st.text_input("Digita il nuovo valore:",key="txt_team")    # Campo di testo libero per digitare un dato inedito
     else:
-        team = st.selectbox("Seleziona dai suggerimenti:", lista_team)    # Menu a tendina che filtra e suggerisce i valori già presenti nel foglio Google
+        team = st.selectbox("Seleziona dai suggerimenti:", lista_team,key="sel_team")    # Menu a tendina che filtra e suggerisce i valori già presenti nel foglio Google
 
     st.write("")
     st.write("**11. On loan from:**")
-    new_loan = st.checkbox("Inserisci un nuovo valore non in elenco")    # 2. Checkbox per decidere se inserire un nuovo valore o sceglierlo dalla lista
+    new_loan = st.checkbox("Inserisci un nuovo valore non in elenco",key="chk_loan")    # 2. Checkbox per decidere se inserire un nuovo valore o sceglierlo dalla lista
     if new_loan:
-        loan = st.text_input("Digita il nuovo valore:")    # Campo di testo libero per digitare un dato inedito
+        loan = st.text_input("Digita il nuovo valore:",key="txt_loan")    # Campo di testo libero per digitare un dato inedito
     else:
-        loan = st.selectbox("Seleziona dai suggerimenti:", lista_loan)    # Menu a tendina che filtra e suggerisce i valori già presenti nel foglio Google
+        loan = st.selectbox("Seleziona dai suggerimenti:", lista_loan,key="sel_loan")    # Menu a tendina che filtra e suggerisce i valori già presenti nel foglio Google
 
     # SONO ARRIVATO QUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
     
