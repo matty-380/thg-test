@@ -83,9 +83,8 @@ else:
 # 3. INTERFACCIA GRAFICA STRUTTURATA
 # ==========================================
 st.set_page_config(page_title="Gestionale Calciatori", layout="wide")
-st.title("⚽ Sistema Censimento Calciatori")
+st.title("👤 Player Report")
 
-st.header("👤 Player Report")
 st.markdown("---")
 
 st.subheader("📁 Player information")
@@ -107,7 +106,7 @@ col_caratt1, col_caratt2, col_caratt3 = st.columns(3)
 with col_caratt1:
     position = st.selectbox("5. Position:", lista_position)
     alt_position = st.selectbox("6. Alt. Position:", lista_position)
-    formation = st.selectbox("7. Formation:", lista_moduli)
+    formation = st.selectbox("7. Formation:", lista_formation)
 
 with col_caratt2:
     foot = st.radio("8. Foot:", ["L", "R", "L/R"])  
