@@ -22,12 +22,13 @@ if not os.path.exists(percorso_credenziali):
 sheet = None
 
 # --- METODO DI CONNESSIONE NATIVO E PROTETTO ---
+client = None
+
 # 1. Tentativo in Cloud (Metodo ufficiale Streamlit)
 if "gcp_service_account" in st.secrets:
     try:
         creds = Credentials.from_service_account_info(st.secrets["gcp_service_account"], scopes=scope)
         client = gspread.authorize(creds)
-        sheet = client.open_by_url(SHEET_URL).sheet1
     except Exception as e:
         st.error(f"Errore nella lettura dei Secrets Cloud: {e}")
 
@@ -35,14 +36,23 @@ if "gcp_service_account" in st.secrets:
 elif os.path.exists(percorso_credenziali):
     creds = Credentials.from_service_account_file(percorso_credenziali, scopes=scope)
     client = gspread.authorize(creds)
-    sheet = client.open_by_url(SHEET_URL).sheet1
 
 # Se entrambi falliscono, blocca l'app con istruzioni chiare
-if sheet is None:
+if client is None:
     st.error("❌ Errore di Connessione: Credenziali non configurate correttamente.")
     st.info("Se sei online, assicurati che il box 'Secrets' sia compilato esattamente come mostrato nella guida.")
     st.stop()
 
+# --- DEFINIZIONE ESPLICITA DELLE SCHEDE ---
+try:
+    spreadsheet = client.open_by_url(SHEET_URL)
+    sheet_players = spreadsheet.worksheet("Players") # Scheda principale
+    sheet_TGH_db = spreadsheet.worksheet("THG db") # Scheda secondaria
+except Exception as e:
+    st.error(f"Impossibile accedere alle schede del foglio: {e}")
+    st.stop()
+    
+    
 # ==========================================
 # 2. LOGICA DATI E RANGE DINAMICI
 # ==========================================
@@ -57,11 +67,17 @@ lista_nazioni = [
     "Senegal", "Serbia", "Spagna", "Svizzera", "Ucraina", "Uruguay", "Altra"
 ]
 
-lista_ruoli = ["POR", "TS", "ASA", "ES", "DC", "TD", "ADA", "ED", "MED", "CC", "COC", "AS", "AD", "SP", "P", "NESSUNA"]
+lista_position = ["GK", "LB", "CB", "RB", "LM", "CM", "CDM", "RM", "LW", "CAM", "RW", "CF", "ST"]
 
-lista_moduli = ["3-5-2", "3-4-1-2", "3-4-3", "4-3-2-1", "4-2-3-1", "4-1-4-1", "4-3-1-2", "4-4-2", "4-2-1-3", "4-3-3", "4-2-4"]
+lista_formation = ["3-5-2", "3-4-1-2", "3-4-3", "4-3-2-1", "4-2-3-1", "4-1-4-1", "4-3-1-2", "4-4-2", "4-2-1-3", "4-3-3", "4-2-4"]
 
 lista_scout = ["Lattuada Giacomo"]
+
+lista_competition_grezza = sheet_TGH_db.col_values(1)
+if len(lista_competition_grezza) > 1:   # Se ci sono dati oltre all'intestazione, scarta la prima riga (indice 0)
+    lista_competition = lista_competition_grezza [1:]  # Taglia l'intestazione
+else:
+    lista_competition = []  # Se c'è solo l'intestazione, la lista resta vuota
 
 # ==========================================
 # 3. INTERFACCIA GRAFICA STRUTTURATA
@@ -69,44 +85,43 @@ lista_scout = ["Lattuada Giacomo"]
 st.set_page_config(page_title="Gestionale Calciatori", layout="wide")
 st.title("⚽ Sistema Censimento Calciatori")
 
-st.header("👤 Informazioni giocatore")
+st.header("👤 Player Report")
 st.markdown("---")
 
-st.subheader("📁 Anagrafica e Contesto Attuale")
+st.subheader("📁 Player information")
 col_anagrafica1, col_anagrafica2, col_anagrafica3 = st.columns(3)
 
 with col_anagrafica1:
-    nome_cognome = st.text_input("1. Nome e Cognome:")
+    name = st.text_input("1. Name:")
+    surname = st.text_input("2. Surname:")
 with col_anagrafica2:
-    anno_nascita = st.selectbox("2. Anno di nascita:", lista_anni)
+    year_birth = st.selectbox("3. Birth:", lista_anni)
 with col_anagrafica3:
-    nazionalita = st.selectbox("3. Nazionalità:", lista_nazioni)
+    nation = st.selectbox("4. Nation:", lista_nazioni)
 
 st.markdown("---")
 
-st.subheader("⚡ Caratteristiche")
+st.subheader("⚡ Characteristic")
 col_caratt1, col_caratt2, col_caratt3 = st.columns(3)
 
 with col_caratt1:
-    posizione_naturale = st.selectbox("4. Posizione Naturale:", lista_ruoli)
-    
-    posizione_naturale2 = ""
-    if posizione_naturale == "MED":
-        posizione_naturale2 = st.selectbox("5. Posizione Naturale2:", ["MED a 1", "MED a 2", "Indifferente"])
-    elif posizione_naturale == "CC":
-        posizione_naturale2 = st.selectbox("5. Posizione Naturale2:", ["CS", "CD", "Indifferente"])
-    elif posizione_naturale in ["AS", "AD"]:
-        posizione_naturale2 = st.selectbox("5. Posizione Naturale2:", ["Piede Invertito", "Piede Naturale", "Indifferente"])
-    elif posizione_naturale == "P":
-        posizione_naturale2 = st.selectbox("5. Posizione Naturale2:", ["P a 1", "P a 2", "Indifferente"])
-    else:
-        st.text_input("5. Posizione Naturale2:", value="Nessuna specifica richiesta", disabled=True)
-
-    posizione_secondaria = st.selectbox("6. Posizione secondaria:", lista_ruoli)
-    modulo_attuale = st.selectbox("7. Modulo attuale d'impiego:", lista_moduli)
+    position = st.selectbox("5. Position:", lista_position)
+    alt_position = st.selectbox("6. Alt. Position:", lista_position)
+    formation = st.selectbox("7. Formation:", lista_moduli)
 
 with col_caratt2:
-    piede_preferito = st.radio("8. Piede preferito:", ["Dx", "Sx", "Entrambi"])
+    foot = st.radio("8. Foot:", ["L", "R", "L/R"])  
+    # 2. Checkbox per decidere se inserire un nuovo valore o sceglierlo dalla lista
+    nuovo_inserimento_attivo = st.checkbox("Inserisci un nuovo valore non in elenco")
+
+    if nuovo_inserimento_attivo:
+    # Campo di testo libero per digitare un dato inedito
+        valore_inserito = st.text_input("Digita il nuovo valore:")
+    else:
+    # Menu a tendina che filtra e suggerisce i valori già presenti nel foglio Google
+        valore_inserito = st.selectbox("Seleziona dai suggerimenti:", lista_competition)
+  
+    
     st.write("") 
     st.write("**Status Squadra:**")
     chk_prima_squadra = st.checkbox("9. Prima squadra")
@@ -135,6 +150,43 @@ with col_caratt3:
 
 st.markdown("---")
 
+st.subheader("🤸 Phisical Profile")
+col_caratt1, col_caratt2, col_caratt3 = st.columns(3)
+with col_caratt1: 
+    height = st.radio("19. Height:", ["≤170cm'", "≥171cm, ≤177cm", "≥178cm, ≤183cm", "≥184cm, ≤188cm", "≥189"])
+    muscolature = st.radio("20. Muscolature:", ["Lean", "Athletic", "Massive"])
+    matrice_physical_build = {
+    "≤170cm": {
+        "Lean": "Short, lean build",
+        "Athletic": "Short, well-balanced build",
+        "Massive": "Short, powerful build"
+    },
+    "≥171cm, ≤177cm": {
+        "Lean": "Short, lean build",
+        "Athletic": "Short, well-balanced build",
+        "Massive": "Short, powerful build"
+    },
+    "≥178cm, ≤183cm": {
+        "Lean": "Medium-height, lean build",
+        "Athletic": "Medium-height, well-balanced build",
+        "Massive": "Medium-height, powerful build"
+    },
+    "≥184cm, ≤188cm": {
+        "Lean": "Average-height, lean build",
+        "Athletic": "Average-height, well-balanced build",
+        "Massive": "Average-height, powerful build"
+    },
+    "≥189": {
+        "Lean": "Tall, lean build",
+        "Athletic": "Tall, well-balanced build",
+        "Massive": "Tall, powerful build"
+    }
+}
+    physical_build = matrice_physical_build.get(height, {}).get(muscolature, "Non definito")
+    st.info(f"🧬 Physical build: **{physical_build}**")
+		
+				
+
 # DA AGGIUNGERE IN SEZOINE (SALVATAGGIO) - DA AGGIUNGERE IN GOOGLESHEET
 
 # ==========================================
@@ -142,16 +194,19 @@ st.markdown("---")
 # ==========================================
 st.markdown("---")
 if st.button("💾 Salva Scheda Giocatore", type="primary", use_container_width=True):
-    if nome_cognome.strip() == "":
-        st.error("Il campo '1. Nome e Cognome' è obbligatorio per salvare la scheda.")
+    if name.strip() == "" or surname.strip() == "":
+        st.error("I campi '1. Nome' e '2. Cognome' sono entrambi obbligatori per salvare la scheda.")
     else:
         valore_prima_squadra = "1a squadra" if chk_prima_squadra else ""
         valore_giovanili = "Giovanili" if chk_giovanili else ""
+        if nuovo_inserimento_attivo and valore_inserito.strip() != "":
+            if valore_inserito not in lista_competition:
+                sheet_TGH_db.append_row([valore_inserito.strip()])
         
         with st.spinner("Calcolo riga libera e generazione ID..."):
-            valori_esistenti = sheet.get_all_values()
+            valori_esistenti = sheet_players.get_all_values()
             prossima_riga = len(valori_esistenti) + 1
-            
+            data_reportITA = data_report.strftime("%d/%m/%Y")
             if prossima_riga == 2:
                 nuovo_id = 1
             else:
@@ -160,19 +215,18 @@ if st.button("💾 Salva Scheda Giocatore", type="primary", use_container_width=
                 except ValueError:
                     nuovo_id = prossima_riga - 1
                     
-            data_reportITA = data_report.strftime("%d/%m/%Y")
             
             # Costruzione riga (Variabili corrette al 100%)
             nuova_riga = [
                 nuovo_id,
-                nome_cognome,
-                anno_nascita,
-                nazionalita,
-                posizione_naturale,
-                posizione_naturale2,
-                posizione_secondaria,
-                modulo_attuale,
-                piede_preferito,
+                name.strip(),
+                surname.strip(),
+                year_birth,
+                nation,
+                position,
+                alt_position,
+                formation,
+                foot,
                 valore_prima_squadra,
                 valore_giovanili,
                 campionato_attuale,
@@ -186,7 +240,7 @@ if st.button("💾 Salva Scheda Giocatore", type="primary", use_container_width=
                 nome_scout
             ]
             
-            sheet.insert_row(nuova_riga, index=prossima_riga, value_input_option='RAW')
+            sheet_players.insert_row(nuova_riga, index=prossima_riga, value_input_option='RAW')
             st.success(f"✔️ Assegnato ID {nuovo_id}: Scheda di '{nome_cognome}' salvata con successo!")
 
 # ==========================================
@@ -195,7 +249,7 @@ if st.button("💾 Salva Scheda Giocatore", type="primary", use_container_width=
 st.markdown("---")
 st.subheader("📊 Vista Tabella Cloud (Sincronizzata)")
 try:
-    dati_cloud = sheet.get_all_records()
+    dati_cloud = sheet_players.get_all_records()
     if dati_cloud:
         df_visualizzazione = pd.DataFrame(dati_cloud)
         st.dataframe(df_visualizzazione, use_container_width=True)
@@ -203,5 +257,3 @@ try:
         st.info("Il database è vuoto. Inserisci il primo giocatore per vedere la tabella.")
 except Exception:
     st.info("Inserisci il primo record per inizializzare la visualizzazione della tabella.")
-
-
