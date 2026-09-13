@@ -166,7 +166,7 @@ st.markdown("---")
 st.subheader("🤸 Phisical Profile")
 col_caratt1, col_caratt2, col_caratt3 = st.columns(3)
 with col_caratt1:
-    height = st.radio("19. Height:", ["≤170cm'", "≥171cm, ≤177cm", "≥178cm, ≤183cm", "≥184cm, ≤188cm", "≥189"])
+    height = st.radio("19. Height:", ["≤170cm", "≥171cm, ≤177cm", "≥178cm, ≤183cm", "≥184cm, ≤188cm", "≥189"])
     muscolature = st.radio("20. Muscolature:", ["Lean", "Athletic", "Massive"])
     matrice_physical_build = {
     "≤170cm": {
@@ -210,8 +210,6 @@ if st.button("💾 Salva Scheda Giocatore", type="primary", use_container_width=
     if name.strip() == "" or surname.strip() == "":
         st.error("I campi '1. Nome' e '2. Cognome' sono entrambi obbligatori per salvare la scheda.")
     else:
-        valore_prima_squadra = "1a squadra" if chk_prima_squadra else ""
-        valore_giovanili = "Giovanili" if chk_giovanili else ""
         if new_competition and competition.strip() != "":
             if competition.strip() not in lista_competition:
                 sheet_TGH_db.append_row([competition.strip()])
