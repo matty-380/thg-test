@@ -51,8 +51,8 @@ try:
 except Exception as e:
     st.error(f"Impossibile accedere alle schede del foglio: {e}")
     st.stop()
-    
-    
+
+
 # ==========================================
 # 2. LOGICA DATI E RANGE DINAMICI
 # ==========================================
@@ -62,8 +62,8 @@ anno_fine = anno_attuale - 10
 lista_anni = list(range(anno_fine, anno_inizio - 1, -1))
 
 lista_nazioni = [
-    "Italia", "Albania", "Argentina", "Belgio", "Brasile", "Croazia", "Francia", 
-    "Germania", "Inghilterra", "Marocco", "Olanda", "Portogallo", "Romania", 
+    "Italia", "Albania", "Argentina", "Belgio", "Brasile", "Croazia", "Francia",
+    "Germania", "Inghilterra", "Marocco", "Olanda", "Portogallo", "Romania",
     "Senegal", "Serbia", "Spagna", "Svizzera", "Ucraina", "Uruguay", "Altra"
 ]
 
@@ -74,10 +74,16 @@ lista_formation = ["3-5-2", "3-4-1-2", "3-4-3", "4-3-2-1", "4-2-3-1", "4-1-4-1",
 lista_scout = ["Lattuada Giacomo"]
 
 lista_competition_grezza = sheet_TGH_db.col_values(1)
-if len(lista_competition_grezza) > 1:   # Se ci sono dati oltre all'intestazione, scarta la prima riga (indice 0)
-    lista_competition = lista_competition_grezza [1:]  # Taglia l'intestazione
-else:
-    lista_competition = []  # Se c'è solo l'intestazione, la lista resta vuota
+clean_competition = [v.strip() for v in lista_competition_grezza[1:] if v.strip() != ""]
+lista_competition = sorted(list(set(clean_competition)))
+
+lista_team_grezza = sheet_TGH_db.col_values(3)
+clean_team = [v.strip() for v in lista_team_grezza[1:] if v.strip() != ""]
+lista_team = sorted(list(set(clean_team)))
+
+lista_loan_grezza = sheet_TGH_db.col_values(4)
+clean_loan = [v.strip() for v in lista_loan_grezza[1:] if v.strip() != ""]
+lista_loan = sorted(list(set(clean_loan)))
 
 # ==========================================
 # 3. INTERFACCIA GRAFICA STRUTTURATA
@@ -109,28 +115,40 @@ with col_caratt1:
     formation = st.selectbox("7. Formation:", lista_formation)
 
 with col_caratt2:
-    foot = st.radio("8. Foot:", ["L", "R", "L/R"])  
-    # 2. Checkbox per decidere se inserire un nuovo valore o sceglierlo dalla lista
-    nuovo_inserimento_attivo = st.checkbox("Inserisci un nuovo valore non in elenco")
-
-    if nuovo_inserimento_attivo:
-    # Campo di testo libero per digitare un dato inedito
-        valore_inserito = st.text_input("Digita il nuovo valore:")
-    else:
-    # Menu a tendina che filtra e suggerisce i valori già presenti nel foglio Google
-        valore_inserito = st.selectbox("Seleziona dai suggerimenti:", lista_competition)
-  
+    foot = st.radio("8. Foot:", ["L", "R", "L/R"])
     
-    st.write("") 
-    st.write("**Status Squadra:**")
-    chk_prima_squadra = st.checkbox("9. Prima squadra")
-    chk_giovanili = st.checkbox("10. Giovanili")
+    st.write("")
+    st.write("**8. Competition:**")
+    new_competition = st.checkbox("Inserisci un nuovo valore non in elenco")  # 2. Checkbox per decidere se inserire un nuovo valore o sceglierlo dalla lista
+    if new_competition:
+        competition = st.text_input("Digita il nuovo valore:")    # Campo di testo libero per digitare un dato inedito
+    else:
+        competition = st.selectbox("Seleziona dai suggerimenti:", lista_competition)    # Menu a tendina che filtra e suggerisce i valori già presenti nel foglio Google
+    group = st.text_input("9. Group:")
+    
+    st.write("")
+    st.write("**10. Team:**")
+    new_team = st.checkbox("Inserisci un nuovo valore non in elenco")    # 2. Checkbox per decidere se inserire un nuovo valore o sceglierlo dalla lista
+    if new_team:
+        team = st.text_input("Digita il nuovo valore:")    # Campo di testo libero per digitare un dato inedito
+    else:
+        team = st.selectbox("Seleziona dai suggerimenti:", lista_team)    # Menu a tendina che filtra e suggerisce i valori già presenti nel foglio Google
 
+    st.write("")
+    st.write("**11. On loan from:**")
+    new_loan = st.checkbox("Inserisci un nuovo valore non in elenco")    # 2. Checkbox per decidere se inserire un nuovo valore o sceglierlo dalla lista
+    if new_loan:
+        loan = st.text_input("Digita il nuovo valore:")    # Campo di testo libero per digitare un dato inedito
+    else:
+        loan = st.selectbox("Seleziona dai suggerimenti:", lista_loan)    # Menu a tendina che filtra e suggerisce i valori già presenti nel foglio Google
+
+    # SONO ARRIVATO QUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+    
 with col_caratt3:
     campionato_attuale = st.text_input("11. Campionato attuale:")
     girone_attuale = st.text_input("12. Girone attuale:")
     club_attuale = st.text_input("13. Club attuale:")
-    
+
 st.markdown("---")
 
 st.subheader("🔭 Scounting Context")
@@ -151,7 +169,7 @@ st.markdown("---")
 
 st.subheader("🤸 Phisical Profile")
 col_caratt1, col_caratt2, col_caratt3 = st.columns(3)
-with col_caratt1: 
+with col_caratt1:
     height = st.radio("19. Height:", ["≤170cm'", "≥171cm, ≤177cm", "≥178cm, ≤183cm", "≥184cm, ≤188cm", "≥189"])
     muscolature = st.radio("20. Muscolature:", ["Lean", "Athletic", "Massive"])
     matrice_physical_build = {
@@ -183,8 +201,8 @@ with col_caratt1:
 }
     physical_build = matrice_physical_build.get(height, {}).get(muscolature, "Non definito")
     st.info(f"🧬 Physical build: **{physical_build}**")
-		
-				
+
+
 
 # DA AGGIUNGERE IN SEZOINE (SALVATAGGIO) - DA AGGIUNGERE IN GOOGLESHEET
 
@@ -198,10 +216,16 @@ if st.button("💾 Salva Scheda Giocatore", type="primary", use_container_width=
     else:
         valore_prima_squadra = "1a squadra" if chk_prima_squadra else ""
         valore_giovanili = "Giovanili" if chk_giovanili else ""
-        if nuovo_inserimento_attivo and valore_inserito.strip() != "":
-            if valore_inserito not in lista_competition:
-                sheet_TGH_db.append_row([valore_inserito.strip()])
-        
+        if new_competition and competition.strip() != "":
+            if competition.strip() not in lista_competition:
+                sheet_TGH_db.append_row([competition.strip()])
+        if new_team and team.strip() != "":
+            if team.strip() not in lista_team:
+                sheet_TGH_db.append_row(["", "", team.strip()])
+        if new_loan and loan.strip() != "":
+            if loan.strip() not in lista_loan:
+                sheet_TGH_db.append_row(["", "", loan.strip()])
+
         with st.spinner("Calcolo riga libera e generazione ID..."):
             valori_esistenti = sheet_players.get_all_values()
             prossima_riga = len(valori_esistenti) + 1
@@ -213,8 +237,8 @@ if st.button("💾 Salva Scheda Giocatore", type="primary", use_container_width=
                     nuovo_id = int(valori_esistenti[-1][0]) + 1
                 except ValueError:
                     nuovo_id = prossima_riga - 1
-                    
-            
+
+
             # Costruzione riga (Variabili corrette al 100%)
             nuova_riga = [
                 nuovo_id,
@@ -226,6 +250,11 @@ if st.button("💾 Salva Scheda Giocatore", type="primary", use_container_width=
                 alt_position,
                 formation,
                 foot,
+                competition,
+                group
+                team
+                loan
+
                 valore_prima_squadra,
                 valore_giovanili,
                 campionato_attuale,
@@ -238,7 +267,7 @@ if st.button("💾 Salva Scheda Giocatore", type="primary", use_container_width=
                 tipologia_scouting,
                 nome_scout
             ]
-            
+
             sheet_players.insert_row(nuova_riga, index=prossima_riga, value_input_option='RAW')
             st.success(f"✔️ Assegnato ID {nuovo_id}: Scheda di '{nome_cognome}' salvata con successo!")
 
