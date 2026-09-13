@@ -251,9 +251,9 @@ if st.button("💾 Salva Scheda Giocatore", type="primary", use_container_width=
                 formation,
                 foot,
                 competition,
-                group
-                team
-                loan
+                group,
+                team,
+                loan,
 
                 valore_prima_squadra,
                 valore_giovanili,
