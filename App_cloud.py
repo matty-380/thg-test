@@ -127,6 +127,7 @@ with col_caratt2:
     group = st.text_input("9. Group:")
     
     st.write("")
+with col_caratt3:
     st.write("**10. Team:**")
     new_team = st.checkbox("Inserisci un nuovo valore non in elenco",key="chk_team")    # 2. Checkbox per decidere se inserire un nuovo valore o sceglierlo dalla lista
     if new_team:
@@ -144,11 +145,6 @@ with col_caratt2:
 
     # SONO ARRIVATO QUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
     
-with col_caratt3:
-    campionato_attuale = st.text_input("11. Campionato attuale:")
-    girone_attuale = st.text_input("12. Girone attuale:")
-    club_attuale = st.text_input("13. Club attuale:")
-
 st.markdown("---")
 
 st.subheader("🔭 Scounting Context")
@@ -255,11 +251,7 @@ if st.button("💾 Salva Scheda Giocatore", type="primary", use_container_width=
                 team,
                 loan,
 
-                valore_prima_squadra,
-                valore_giovanili,
-                campionato_attuale,
-                girone_attuale,
-                club_attuale,
+                
                 partita_osservata,
                 minuti_giocati,
                 tipologia_scouting,
