@@ -47,7 +47,7 @@ if client is None:
 try:
     spreadsheet = client.open_by_url(SHEET_URL)
     sheet_players = spreadsheet.worksheet("Players") # Scheda principale
-    sheet_TGH_db = spreadsheet.worksheet("THG db") # Scheda secondaria
+    sheet_TGH_db = spreadsheet.worksheet("THG_db") # Scheda secondaria
 except Exception as e:
     st.error(f"Impossibile accedere alle schede del foglio: {e}")
     st.stop()
