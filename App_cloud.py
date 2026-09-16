@@ -67,9 +67,7 @@ lista_nazioni = [
 ]
 
 lista_position = ["GK", "LB", "CB", "RB", "LM", "CM", "CDM", "RM", "LW", "CAM", "RW", "CF", "ST"]
-
 lista_formation = ["3-5-2", "3-4-1-2", "3-4-3", "4-3-2-1", "4-2-3-1", "4-1-4-1", "4-3-1-2", "4-4-2", "4-2-1-3", "4-3-3", "4-2-4"]
-
 lista_scout = ["Lattuada Giacomo"]
 
 @st.cache_data(ttl=300)
@@ -85,6 +83,10 @@ def carica_dizionario_TGH_db():
         "competition": comp,
         "team": team,
     }
+
+@st.cache_data(ttl=300)
+def carica_giocatori_cloud():
+    return sheet_players.get_all_records()
 
 # Caricamento del dizionario
 dizionario_TGH_db = carica_dizionario_TGH_db()
@@ -278,7 +280,8 @@ if st.button("💾 Salva Scheda Giocatore", type="primary", use_container_width=
             ]
 
             sheet_players.insert_row(nuova_riga, index=prossima_riga, value_input_option='RAW')
-            st.success(f"✔️ Assegnato ID {nuovo_id}: Scheda di '{nome_cognome}' salvata con successo!")
+            st.cache_data.clear()
+            st.success(f"✔️ Assegnato ID {nuovo_id}: Scheda di '{name.strip()} {surname.strip()}' salvata con successo!")
 
 # ==========================================
 # 5. ANTEPRIMA DEL DATABASE ONLINE
@@ -286,11 +289,11 @@ if st.button("💾 Salva Scheda Giocatore", type="primary", use_container_width=
 st.markdown("---")
 st.subheader("📊 Vista Tabella Cloud (Sincronizzata)")
 try:
-    dati_cloud = sheet_players.get_all_records()
+    dati_cloud = carica_giocatori_cloud()
     if dati_cloud:
         df_visualizzazione = pd.DataFrame(dati_cloud)
         st.dataframe(df_visualizzazione, use_container_width=True)
     else:
         st.info("Il database è vuoto. Inserisci il primo giocatore per vedere la tabella.")
-except Exception:
+except Exception as e:
     st.info("Inserisci il primo record per inizializzare la visualizzazione della tabella.")
