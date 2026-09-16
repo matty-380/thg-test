@@ -138,8 +138,9 @@ with col_caratt2:
     
     group = st.text_input("9. Group:")
 
-    st.write("")
+    
 with col_caratt3:
+    st.write("")
     st.write("**10. Team:**")
     new_team = st.checkbox("Inserisci un nuovo valore non in elenco",key="chk_team")    # 2. Checkbox per decidere se inserire un nuovo valore o sceglierlo dalla lista
     if new_team:
@@ -169,7 +170,7 @@ with col_caratt1:
 		minuti_giocati = st.radio("15. Minuti giocati:", ["<45'", ">45'", "Match completo"])
 
 with col_caratt2:
-		data_report = st.date_input("16. Data compilazione:", value=datetime.date.today())
+		data_report = st.date_input("16. Data compilazione:", value=datetime.date.today(),format="DD/MM/YYYY")
 		tipologia_scouting = st.radio("17. Tipologia scounting:", ["Live", "Video"])
 
 with col_caratt3:
