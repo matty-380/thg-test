@@ -123,9 +123,9 @@ with col_caratt1:
     position = st.selectbox("5. Position:", lista_position)
     alt_position = st.selectbox("6. Alt. Position:", lista_position)
     formation = st.selectbox("7. Formation:", lista_formation)
-
-with col_caratt2:
     foot = st.radio("8. Foot:", ["L", "R", "L/R"])
+
+with col_caratt2:  
 
     st.write("")
     st.write("**8. Competition:**")
@@ -273,7 +273,6 @@ if st.button("💾 Salva Scheda Giocatore", type="primary", use_container_width=
 
                 partita_osservata,
                 minuti_giocati,
-                tipologia_scouting,
                 data_reportITA,
                 tipologia_scouting,
                 nome_scout
