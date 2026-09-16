@@ -73,17 +73,26 @@ lista_formation = ["3-5-2", "3-4-1-2", "3-4-3", "4-3-2-1", "4-2-3-1", "4-1-4-1",
 
 lista_scout = ["Lattuada Giacomo"]
 
-lista_competition_grezza = sheet_TGH_db.col_values(1)
-clean_competition = [v.strip() for v in lista_competition_grezza[1:] if v.strip() != ""]
-lista_competition = sorted(list(set(clean_competition)))
+@st.cache_data(ttl=300)
+def carica_dizionario_TGH_db():
+    dati = sheet_TGH_db.get_all_records()
+    if not dati:
+        return {"competition": [], "group": [], "team": []}
 
-lista_team_grezza = sheet_TGH_db.col_values(3)
-clean_team = [v.strip() for v in lista_team_grezza[1:] if v.strip() != ""]
-lista_team = sorted(list(set(clean_team)))
+    comp = sorted(list(set(str(riga["Competition"]).strip() for riga in dati if riga.get("Competition") and str(riga["Competition"]).strip() != "")))
+    team = sorted(list(set(str(riga["Team"]).strip() for riga in dati if riga.get("Team") and str(riga["Team"]).strip() != "")))
+    
+    return {
+        "competition": comp,
+        "team": team,
+    }
 
-lista_loan_grezza = sheet_TGH_db.col_values(4)
-clean_loan = [v.strip() for v in lista_loan_grezza[1:] if v.strip() != ""]
-lista_loan = sorted(list(set(clean_loan)))
+# Caricamento del dizionario
+dizionario_TGH_db = carica_dizionario_TGH_db()
+
+lista_competition = dizionario_TGH_db["competition"]
+lista_team = dizionario_TGH_db["team"]
+
 
 # ==========================================
 # 3. INTERFACCIA GRAFICA STRUTTURATA
@@ -116,16 +125,18 @@ with col_caratt1:
 
 with col_caratt2:
     foot = st.radio("8. Foot:", ["L", "R", "L/R"])
-    
+
     st.write("")
     st.write("**8. Competition:**")
     new_competition = st.checkbox("Inserisci un nuovo valore non in elenco",key="chk_competition")  # 2. Checkbox per decidere se inserire un nuovo valore o sceglierlo dalla lista
     if new_competition:
         competition = st.text_input("Digita il nuovo valore:",key="txt_competition")    # Campo di testo libero per digitare un dato inedito
     else:
-        competition = st.selectbox("Seleziona dai suggerimenti:", lista_competition,key="sel_competition")    # Menu a tendina che filtra e suggerisce i valori già presenti nel foglio Google
-    group = st.text_input("9. Group:")
+        opzioni_comp = lista_competition if lista_competition else ["-- Nessun suggerimento --"]
+        competition = st.selectbox("Seleziona dai suggerimenti:", opzioni_comp, key="sel_competition")    # Menu a tendina che filtra e suggerisce i valori già presenti nel foglio Google
     
+    group = st.text_input("9. Group:")
+
     st.write("")
 with col_caratt3:
     st.write("**10. Team:**")
@@ -133,7 +144,8 @@ with col_caratt3:
     if new_team:
         team = st.text_input("Digita il nuovo valore:",key="txt_team")    # Campo di testo libero per digitare un dato inedito
     else:
-        team = st.selectbox("Seleziona dai suggerimenti:", lista_team,key="sel_team")    # Menu a tendina che filtra e suggerisce i valori già presenti nel foglio Google
+        opzioni_team = lista_team if lista_team else ["-- Nessun suggerimento --"]
+        team = st.selectbox("Seleziona dai suggerimenti:", opzioni_team,key="sel_team")    # Menu a tendina che filtra e suggerisce i valori già presenti nel foglio Google
 
     st.write("")
     st.write("**11. On loan from:**")
@@ -141,10 +153,11 @@ with col_caratt3:
     if new_loan:
         loan = st.text_input("Digita il nuovo valore:",key="txt_loan")    # Campo di testo libero per digitare un dato inedito
     else:
-        loan = st.selectbox("Seleziona dai suggerimenti:", lista_loan,key="sel_loan")    # Menu a tendina che filtra e suggerisce i valori già presenti nel foglio Google
+        opzioni_loan = lista_team if lista_team else ["-- Nessun suggerimento --"]
+        loan = st.selectbox("Seleziona dai suggerimenti:", opzioni_loan,key="sel_loan")    # Menu a tendina che filtra e suggerisce i valori già presenti nel foglio Google
 
     # SONO ARRIVATO QUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
-    
+
 st.markdown("---")
 
 st.subheader("🔭 Scounting Context")
@@ -208,18 +221,25 @@ with col_caratt1:
 st.markdown("---")
 if st.button("💾 Salva Scheda Giocatore", type="primary", use_container_width=True):
     if name.strip() == "" or surname.strip() == "":
-        st.error("I campi '1. Nome' e '2. Cognome' sono entrambi obbligatori per salvare la scheda.")
+        st.error("I campi '1. Name' e '2. Surname' sono entrambi obbligatori per salvare la scheda.")
     else:
+        nuovi_dati_inseriti = False
         if new_competition and competition.strip() != "":
             if competition.strip() not in lista_competition:
                 sheet_TGH_db.append_row([competition.strip()])
+                nuovi_dati_inseriti = True
         if new_team and team.strip() != "":
             if team.strip() not in lista_team:
                 sheet_TGH_db.append_row(["", "", team.strip()])
+                nuovi_dati_inseriti = True
         if new_loan and loan.strip() != "":
-            if loan.strip() not in lista_loan:
+            if loan.strip() not in lista_team:
                 sheet_TGH_db.append_row(["", "", loan.strip()])
+                nuovi_dati_inseriti = True
 
+        if nuovi_dati_inseriti:
+            st.cache_data.clear()
+        
         with st.spinner("Calcolo riga libera e generazione ID..."):
             valori_esistenti = sheet_players.get_all_values()
             prossima_riga = len(valori_esistenti) + 1
@@ -249,7 +269,7 @@ if st.button("💾 Salva Scheda Giocatore", type="primary", use_container_width=
                 team,
                 loan,
 
-                
+
                 partita_osservata,
                 minuti_giocati,
                 tipologia_scouting,
