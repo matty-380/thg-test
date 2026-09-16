@@ -10,37 +10,36 @@ import streamlit as st
 # ==========================================
 # ⚠️ SOSTITUISCI QUESTO LINK CON IL TUO LINK REALE DEL FOGLIO GOOGLE
 SHEET_URL = "https://docs.google.com/spreadsheets/d/1y-tABOUcIIwxD7W9zNcg22uKjr-bHxlKziJim3S-n1I/edit?usp=sharing"
-
 scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
 
-cartella_script = os.path.dirname(os.path.abspath(__file__))
-percorso_credenziali = os.path.join(cartella_script, "credentials.json")
+@st.cache_resource(ttl=3600)
+def ottieni_connessione_gspread():
+    cartella_script = os.path.dirname(os.path.abspath(__file__))
+    percorso_credenziali = os.path.join(cartella_script, "credentials.json")
+    if not os.path.exists(percorso_credenziali):
+        percorso_credenziali = os.path.join(cartella_script, "credentials.json.txt")
 
-if not os.path.exists(percorso_credenziali):
-    percorso_credenziali = os.path.join(cartella_script, "credentials.json.txt")
-
-sheet = None
-
-# --- METODO DI CONNESSIONE NATIVO E PROTETTO ---
-client = None
-
-# 1. Tentativo in Cloud (Metodo ufficiale Streamlit)
-if "gcp_service_account" in st.secrets:
-    try:
+    client = None
+    if "gcp_service_account" in st.secrets:
         creds = Credentials.from_service_account_info(st.secrets["gcp_service_account"], scopes=scope)
         client = gspread.authorize(creds)
-    except Exception as e:
-        st.error(f"Errore nella lettura dei Secrets Cloud: {e}")
+    elif os.path.exists(percorso_credenziali):
+        creds = Credentials.from_service_account_file(percorso_credenziali, scopes=scope)
+        client = gspread.authorize(creds)
+    
+    if client is None:
+        return None, None, None
 
-# 2. Tentativo in Locale (Sul tuo PC)
-elif os.path.exists(percorso_credenziali):
-    creds = Credentials.from_service_account_file(percorso_credenziali, scopes=scope)
-    client = gspread.authorize(creds)
+    spreadsheet = client.open_by_url(SHEET_URL)
+    sheet_players = spreadsheet.worksheet("Players")
+    sheet_TGH_db = spreadsheet.worksheet("TGH_db")
+    
+    return client, sheet_players, sheet_TGH_db
 
-# Se entrambi falliscono, blocca l'app con istruzioni chiare
+client, sheet_players, sheet_TGH_db = ottieni_connessione_gspread()
+
 if client is None:
     st.error("❌ Errore di Connessione: Credenziali non configurate correttamente.")
-    st.info("Se sei online, assicurati che il box 'Secrets' sia compilato esattamente come mostrato nella guida.")
     st.stop()
 
 # --- DEFINIZIONE ESPLICITA DELLE SCHEDE ---
